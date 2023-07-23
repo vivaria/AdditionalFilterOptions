@@ -32,7 +32,7 @@
     <TargetFramework Condition="$(DefineConstants.Contains('TAIKO_MONO'))">net48</TargetFramework>
     <AssemblyName>com.db.AdditionalFilterOptions</AssemblyName>
     <Description>Adds a lot more ways to filter the song list.</Description>
-    <Version>1.0.0</Version>
+    <Version>0.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <RootNamespace>AdditionalFilterOptions</RootNamespace>
@@ -51,6 +51,7 @@
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="Taiko.GameLibs" Version="1.2.2-r.1" />
     <PackageReference Include="UnityEngine.Modules" Version="2020.3.34" IncludeAssets="compile" />
+    <Reference Include="$(GameDir)\Taiko no Tatsujin_Data\Managed\Unity.TextMeshPro.dll" Private="false" />
   </ItemGroup>
 
   <ItemGroup>
@@ -64,6 +65,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive; compile</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="System.Text.Json" Version="8.0.0-preview.6.23329.7" />
   </ItemGroup>
 
 </Project>

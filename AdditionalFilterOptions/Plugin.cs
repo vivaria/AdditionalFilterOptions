@@ -26,6 +26,7 @@ namespace AdditionalFilterOptions
         public new static ManualLogSource Log;
 
         public ConfigEntry<bool> ConfigEnabled;
+        public ConfigEntry<string> ConfigPlaylistLocation;
 
 #if TAIKO_MONO
         private void Awake()
@@ -56,6 +57,10 @@ namespace AdditionalFilterOptions
                 true,
                 "Enables the mod.");
 
+            ConfigPlaylistLocation = Config.Bind("General",
+                "PlaylistLocation",
+                "BepInEx\\data\\CustomPlaylists",
+                "Location for custom playlists.");
         }
 
         private void SetupHarmony()
