@@ -67,12 +67,15 @@ namespace AdditionalFilterOptions.Patches
             {
                 pressedF3 = false;
             }
-            return true;
+
+            return !isActive;
         }
 
-        private static void SetFilterMenuActive(bool isActive)
+        static bool isActive = false;
+        private static void SetFilterMenuActive(bool changeActive)
         {
-            filterMenu.SetFilterMenuActive(isActive);
+            isActive = changeActive;
+            filterMenu.SetFilterMenuActive(changeActive);
             List<string> ObjectsToDisableRaycasting = new List<string>()
             {
                 "mid_canvas",
@@ -87,7 +90,7 @@ namespace AdditionalFilterOptions.Patches
                     var rayCaster = gameObject.GetComponent<GraphicRaycaster>();
                     if (rayCaster != null)
                     {
-                        rayCaster.enabled = !isActive;
+                        rayCaster.enabled = !changeActive;
                     }
                 }
             }

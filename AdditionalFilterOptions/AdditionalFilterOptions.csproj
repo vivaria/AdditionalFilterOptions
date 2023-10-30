@@ -30,7 +30,7 @@
   <PropertyGroup>
     <TargetFramework Condition="$(DefineConstants.Contains('TAIKO_IL2CPP'))">net6.0</TargetFramework>
     <TargetFramework Condition="$(DefineConstants.Contains('TAIKO_MONO'))">net48</TargetFramework>
-    <AssemblyName>com.db.AdditionalFilterOptions</AssemblyName>
+    <AssemblyName>com.DB.AdditionalFilterOptions</AssemblyName>
     <Description>Adds a lot more ways to filter the song list.</Description>
     <Version>0.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
