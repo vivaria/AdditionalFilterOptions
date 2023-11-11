@@ -6,17 +6,25 @@ using System.Threading.Tasks;
 
 namespace AdditionalFilterOptions.Patches
 {
-    enum SortOptions
-    {
-        Default,
-        Difficulty,
-        Accuracy,
-        AlphabeticalTitle,
-        AlphabeticalSubtitle
-    }
     internal class SortSettings
     {
-        public SortOptions PrimarySort { get; set; } = SortOptions.Default;
-        public SortOptions SecondarySort { get; set; } = SortOptions.Default;
+        public SortType PrimarySort { get
+            {
+                if (Sorts.Count > 0)
+                {
+                    return Sorts[0];
+                }
+                else
+                {
+                    return SortType.Default;
+                }
+            }
+        }
+        public List<SortType> Sorts { get; set; } = new List<SortType>();
+        public SortSettings()
+        {
+            Sorts = new List<SortType>();
+
+        }
     }
 }

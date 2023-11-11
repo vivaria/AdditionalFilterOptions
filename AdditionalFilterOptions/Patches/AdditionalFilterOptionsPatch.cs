@@ -106,5 +106,106 @@ namespace AdditionalFilterOptions.Patches
         {
             return filterMenu.gameObject.activeInHierarchy;
         }
+
+        [HarmonyPatch(typeof(SongSelectManager))]
+        [HarmonyPatch(nameof(SongSelectManager.UpdateSortCategoryInfo))]
+        [HarmonyPatch(MethodType.Normal)]
+        [HarmonyPrefix]
+        private static bool SongSelectManager_UpdateSortCategoryInfo_Prefix(SongSelectManager __instance)
+        {
+            return false;
+        }
+
+        [HarmonyPatch(typeof(SongSelectManager))]
+        [HarmonyPatch(nameof(SongSelectManager.SkipSongNext))]
+        [HarmonyPatch(MethodType.Normal)]
+        [HarmonyPrefix]
+        private static bool SongSelectManager_SkipSongNext_Prefix(SongSelectManager __instance)
+        {
+            if (__instance.CurrentState != SongSelectManager.State.SongSelect)
+            {
+                return false;
+            }
+            if (__instance.isKanbanMoving)
+            {
+                return false;
+            }
+            if (__instance.SongList.Count <= 0)
+            {
+                return false;
+            }
+
+            var num = 0;
+            for (int i = __instance.SortCategoryNum - 1; i >= 0; i--)
+            {
+                if (__instance.SelectedSongIndex >= __instance.CategoryTopSongIndex[i])
+                {
+                    num = (i + 1) % __instance.SortCategoryNum;
+                    break;
+                }
+            }
+
+            Plugin.Log.LogInfo("__instance.SelectedSongIndex Before: " + __instance.SelectedSongIndex);
+            __instance.SelectedSongIndex = __instance.CategoryTopSongIndex[num] % __instance.SongList.Count;
+            Plugin.Log.LogInfo("__instance.SelectedSongIndex After: " + __instance.SelectedSongIndex);
+            __instance.PlayKanbanMoveAnim(SongSelectManager.KanbanMoveType.Initialize, SongSelectManager.KanbanMoveSpeed.Normal);
+            __instance.UpdateKanbanSurface(false);
+            __instance.UpdateSortBarSurface(true);
+            TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MySoundManager.CommonSePlay("return", false, false);
+            __instance.isSongLoadRequested = true;
+            __instance.songPlayer.Stop(true);
+            __instance.isSongPlaying = false;
+            __instance.oniUraChangeTimeCount = 0f;
+            __instance.kanbans[0].DiffCourseChangeAnim.Play("ChangeMania", 0, 1f);
+            __instance.UpdateScoreDisplay();
+
+            return false;
+        }
+
+        [HarmonyPatch(typeof(SongSelectManager))]
+        [HarmonyPatch(nameof(SongSelectManager.SkipSongPrev))]
+        [HarmonyPatch(MethodType.Normal)]
+        [HarmonyPrefix]
+        private static bool SongSelectManager_SkipSongPrev_Prefix(SongSelectManager __instance)
+        {
+            if (__instance.CurrentState != SongSelectManager.State.SongSelect)
+            {
+                return false;
+            }
+            if (__instance.isKanbanMoving)
+            {
+                return false;
+            }
+            if (__instance.SongList.Count <= 0)
+            {
+                return false;
+            }
+
+            var num = 0;
+            for (int i = __instance.SortCategoryNum - 1; i >= 0; i--)
+            {
+                if (__instance.SelectedSongIndex >= __instance.CategoryTopSongIndex[i])
+                {
+                    num = (i - 1 + __instance.SortCategoryNum) % __instance.SortCategoryNum;
+                    break;
+                }
+            }
+
+            Plugin.Log.LogInfo("__instance.SelectedSongIndex Before: " + __instance.SelectedSongIndex);
+            __instance.SelectedSongIndex = (__instance.CategoryTopSongIndex[num] + __instance.CategorySongsNum[num] - 1 + __instance.SongList.Count) % __instance.SongList.Count;
+            Plugin.Log.LogInfo("__instance.SelectedSongIndex After: " + __instance.SelectedSongIndex);
+            __instance.PlayKanbanMoveAnim(SongSelectManager.KanbanMoveType.Initialize, SongSelectManager.KanbanMoveSpeed.Normal);
+            __instance.UpdateKanbanSurface(false);
+            __instance.UpdateSortBarSurface(true);
+            TaikoSingletonMonoBehaviour<CommonObjects>.Instance.MySoundManager.CommonSePlay("return", false, false);
+            __instance.isSongLoadRequested = true;
+            __instance.songPlayer.Stop(true);
+            __instance.isSongPlaying = false;
+            __instance.oniUraChangeTimeCount = 0f;
+            __instance.kanbans[0].DiffCourseChangeAnim.Play("ChangeMania", 0, 1f);
+            __instance.UpdateScoreDisplay();
+
+            return false;
+        }
     }
 }

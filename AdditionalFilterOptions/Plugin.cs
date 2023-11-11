@@ -6,6 +6,7 @@ using System.Collections;
 using UnityEngine;
 using BepInEx.Configuration;
 using AdditionalFilterOptions.Patches;
+using System.IO;
 
 #if TAIKO_IL2CPP
 using BepInEx.Unity.IL2CPP.Utils;
@@ -62,7 +63,7 @@ namespace AdditionalFilterOptions
 
             ConfigPlaylistLocation = Config.Bind("General",
                 "PlaylistLocation",
-                "BepInEx\\data\\CustomPlaylists",
+                Path.Combine("BepInEx", "data", "CustomPlaylists"),
                 "Location for custom playlists.");
 
             ConfigLoggingEnabled = Config.Bind("Debug",

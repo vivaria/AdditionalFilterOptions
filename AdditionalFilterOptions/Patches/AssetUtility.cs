@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PlayFab.DataModels;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace AdditionalFilterOptions.Patches
@@ -14,19 +16,19 @@ namespace AdditionalFilterOptions.Patches
     {
         static Dictionary<string, Sprite> LoadedSprites;
 
-        public static Button AddButtonComponent(GameObject newObject)
+        public static UIButton AddButtonComponent(GameObject newObject)
         {
-            newObject.AddComponent<GraphicRaycaster>();
-            return newObject.AddComponent<Button>();
+            newObject.GetOrAddComponent<GraphicRaycaster>();
+            return newObject.GetOrAddComponent<UIButton>();
         }
 
         private static GameObject CreateButton(GameObject parent, string name, Rect rect, string text)
         {
             GameObject newObject = new GameObject(name);
             newObject.transform.SetParent(parent.transform);
-            var button = newObject.AddComponent<Button>();
+            var button = newObject.GetOrAddComponent<UIButton>();
 
-            var raycaster = newObject.AddComponent<GraphicRaycaster>();
+            var raycaster = newObject.GetOrAddComponent<GraphicRaycaster>();
 
             var rectTransform = SetRect(newObject, rect);
 
@@ -66,17 +68,62 @@ namespace AdditionalFilterOptions.Patches
 
         public static void ChangeButtonTransparency(GameObject button, bool isOn)
         {
-            var image = button.GetOrAddComponent<Image>();
-            var imageColor = image.color;
-            if (isOn)
+            var images = button.GetComponentsInChildren<Image>();
+            var image = button.GetComponent<Image>();
+            if (image != null)
             {
-                imageColor.a = 1;
+                var imageColor = image.color;
+                if (isOn)
+                {
+                    imageColor.a = 1;
+                }
+                else
+                {
+                    imageColor.a = 0.5f;
+                }
+                image.color = imageColor;
             }
-            else
+            for (int i = 0; i < images.Length; i++)
             {
-                imageColor.a = 0.5f;
+                var imageColor = images[i].color;
+                if (isOn)
+                {
+                    imageColor.a = 1;
+                }
+                else
+                {
+                    imageColor.a = 0.5f;
+                }
+                images[i].color = imageColor;
             }
-            image.color = imageColor;
+            var texts = button.GetComponentsInChildren<TextMeshProUGUI>();
+            var text = button.GetComponent<TextMeshProUGUI>();
+            if (text != null)
+            {
+                var imageColor = text.color;
+                if (isOn)
+                {
+                    imageColor.a = 1;
+                }
+                else
+                {
+                    imageColor.a = 0.5f;
+                }
+                text.color = imageColor;
+            }
+            for (int i = 0; i < texts.Length; i++)
+            {
+                var imageColor = texts[i].color;
+                if (isOn)
+                {
+                    imageColor.a = 1;
+                }
+                else
+                {
+                    imageColor.a = 0.5f;
+                }
+                texts[i].color = imageColor;
+            }
         }
 
         public static void ChangeButtonAndTextTransparency(GameObject button, bool isOn)
@@ -101,7 +148,7 @@ namespace AdditionalFilterOptions.Patches
 
         public static void ChangeDifficultyButtonAndTextTransparency(GameObject button, bool isOn)
         {
-            var image = button.GetOrAddComponent<Image>();
+            var image = GetChildByName(button, "IconDiff").GetComponent<Image>();
             var text = GetChildByName(button, "Text").GetComponent<TextMeshProUGUI>();
             var imageColor = image.color;
             var textColor = text.color;
@@ -154,6 +201,9 @@ namespace AdditionalFilterOptions.Patches
             inputField.textViewport = textArea.GetComponent<RectTransform>();
             inputField.textComponent = text.GetComponent<TextMeshProUGUI>();
             inputField.placeholder = placeholder.GetComponent<TextMeshProUGUI>();
+
+            inputField.enabled = false;
+            inputField.enabled = true;
 
             return newObject;
         }
@@ -339,6 +389,220 @@ namespace AdditionalFilterOptions.Patches
         #endregion
 
 
+        #region Slider
+
+        static public GameObject CreateSlider(GameObject parent, string name, Rect rect, int min, int max)
+        {
+            var newObject = CreateSlider(name, rect, parent);
+            var slider = newObject.GetComponent<Slider>();
+
+            slider.wholeNumbers = true;
+
+            slider.minValue = min;
+            slider.maxValue = max;
+
+            return newObject;
+        }
+
+        static public GameObject CreateSlider(string name, float min, float max, Rect rect, GameObject parent)
+        {
+            var newObject = CreateSlider(name, rect, parent);
+            var slider = newObject.GetComponent<Slider>();
+
+            slider.wholeNumbers = false;
+
+            slider.minValue = min;
+            slider.maxValue = max;
+
+            return newObject;
+        }
+
+        static private GameObject CreateSlider(string name, Rect rect, GameObject parent)
+        {
+            // Create the object
+            GameObject newObject = CreateEmptyObject(parent, name, rect);
+
+            // Add a Slider component to it
+            var slider = newObject.AddComponent<Slider>();
+            var raycaster = newObject.AddComponent<GraphicRaycaster>();
+
+
+            // Create background child
+            GameObject backgroundObject = CreateEmptyObject(newObject, "Background", new Rect(0, 0, 0, 0));
+            var backgroundRect = backgroundObject.GetComponent<RectTransform>();
+            backgroundRect.anchorMin = new Vector2(0, 0.25f);
+            backgroundRect.anchorMax = new Vector2(1, 0.75f);
+            backgroundRect.pivot = new Vector2(0.5f, 0.5f);
+
+            // Add Image component to background child
+            var bgImage = backgroundObject.GetOrAddComponent<Image>();
+            bgImage.color = new Color32(214, 214, 214, 255);
+
+            // Create Fill Area object
+            GameObject fillAreaObject = CreateEmptyObject(newObject, "Fill Area", new Rect(-5f, 0, -20, 0));
+            var fillAreaRect = fillAreaObject.GetComponent<RectTransform>();
+            fillAreaRect.anchorMin = new Vector2(0, 0.25f);
+            fillAreaRect.anchorMax = new Vector2(1, 0.75f);
+            fillAreaRect.pivot = new Vector2(0.5f, 0.5f);
+
+            // Create Fill object
+            GameObject fillObject = CreateEmptyObject(fillAreaObject, "Fill", new Rect(0, 0, 10, 0));
+            var fillImage = fillObject.GetOrAddComponent<Image>();
+            fillImage.color = new Color32(255, 255, 255, 255);
+
+            // Create Handle Slide Area object
+            GameObject handleSlideAreaObject = CreateEmptyObject(newObject, "Handle Slide Area", new Rect(0, 0, -20, 0));
+            var handleSlideAreaRect = handleSlideAreaObject.GetComponent<RectTransform>();
+            handleSlideAreaRect.anchorMin = new Vector2(0, 0);
+            handleSlideAreaRect.anchorMax = new Vector2(1, 1);
+            handleSlideAreaRect.pivot = new Vector2(0.5f, 0.5f);
+
+            // Create Handle object
+            GameObject handleObject = CreateEmptyObject(handleSlideAreaObject, "Handle", new Rect(0, 0, 20, 0));
+            var handleImage = handleObject.GetOrAddComponent<Image>();
+            handleImage.color = new Color32(255, 255, 255, 255);
+
+            // Assign Slider variables
+            slider.targetGraphic = handleImage;
+            slider.fillRect = fillObject.GetComponent<RectTransform>();
+            slider.handleRect = handleObject.GetComponent<RectTransform>();
+
+            return newObject;
+        }
+
+        #endregion
+
+        #region Dropdown
+
+        static public GameObject CreateDropdown(GameObject parent, string name, Rect rect, List<string> options)
+        {
+            GameObject dropdownObject = CreateEmptyObject(parent, name, rect);
+            var dropdownImage = dropdownObject.GetOrAddComponent<Image>();
+            dropdownImage.color = new Color32(255, 255, 255, 255);
+            var dropdownDropdown = dropdownObject.AddComponent<TMP_Dropdown>();
+            dropdownObject.AddComponent<GraphicRaycaster>();
+
+            // Create Label
+            GameObject labelObject = CreateEmptyObject(dropdownObject, "Label", new Rect(-7.5f, -0.5f, -35, -13));
+            AdjustAnchors(labelObject, new Vector2(0, 0), new Vector2(1, 1));
+            var labelText = labelObject.GetOrAddComponent<TextMeshProUGUI>();
+            labelText.text = "Option A";
+            labelText.alignment = TextAlignmentOptions.Left;
+            labelText.enableAutoSizing = false;
+            labelText.color = new Color32(0, 0, 0, 255);
+
+            // Create Arrow
+            GameObject arrowObject = CreateEmptyObject(dropdownObject, "Arrow", new Rect(-15, 0, 20, 20));
+            AdjustAnchors(arrowObject, new Vector2(1, 0.5f), new Vector2(1, 0.5f));
+            var arrowImage = arrowObject.GetOrAddComponent<Image>();
+            arrowImage.color = new Color32(20, 20, 20, 40);
+
+            // Create Template
+            GameObject templateObject = CreateEmptyObject(dropdownObject, "Template", new Rect(0, 2, 0, 150));
+            AdjustAnchors(templateObject, new Vector2(0, 0), new Vector2(1, 0));
+            AdjustPivot(templateObject, new Vector2(0.5f, 1));
+            templateObject.SetActive(false);
+            var templateImage = templateObject.GetOrAddComponent<Image>();
+            templateImage.color = new Color32(255, 255, 255, 255);
+            var templateScrollRect = templateObject.AddComponent<ScrollRect>();
+            templateScrollRect.horizontal = false;
+            templateScrollRect.movementType = ScrollRect.MovementType.Clamped;
+            templateScrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+            templateScrollRect.verticalScrollbarSpacing = -3;
+
+            // Create Viewport
+            GameObject viewportObject = CreateEmptyObject(templateObject, "Viewport", new Rect(0, 0, -18, 0));
+            AdjustAnchors(viewportObject, new Vector2(0, 0), new Vector2(1, 1));
+            AdjustPivot(viewportObject, new Vector2(0, 1));
+            var viewportMask = viewportObject.AddComponent<Mask>();
+            viewportMask.showMaskGraphic = false;
+            var viewportImage = viewportObject.GetOrAddComponent<Image>();
+            viewportImage.color = new Color32(255, 255, 255, 255);
+
+            // Create Content
+            GameObject contentObject = CreateEmptyObject(viewportObject, "Content", new Rect(0, 0, 0, 28));
+            AdjustAnchors(contentObject, new Vector2(0, 1), new Vector2(1, 1));
+            AdjustPivot(contentObject, new Vector2(0.5f, 1));
+
+            // Create Item
+            GameObject itemObject = CreateEmptyObject(contentObject, "Item", new Rect(0, 0, 0, 20));
+            AdjustAnchors(itemObject, new Vector2(0, 0.5f), new Vector2(1, 0.5f));
+            AdjustPivot(itemObject, new Vector2(0.5f, 0.5f));
+            var itemToggle = itemObject.AddComponent<Toggle>();
+            itemToggle.isOn = true;
+
+            // Create Item Background
+            GameObject itemBackgroundObject = CreateEmptyObject(itemObject, "Item Background", new Rect(0, 0, 0, 0));
+            AdjustAnchors(itemBackgroundObject, new Vector2(0, 0), new Vector2(1, 1));
+            AdjustPivot(itemBackgroundObject, new Vector2(0.5f, 0.5f));
+            var itemBackgroundImage = itemBackgroundObject.GetOrAddComponent<Image>();
+            itemBackgroundImage.color = new Color32(255, 255, 255, 255);
+
+            // Create Item Checkmark
+            GameObject itemCheckmarkObject = CreateEmptyObject(itemObject, "Item Checkmark", new Rect(10, 0, 20, 20));
+            AdjustAnchors(itemCheckmarkObject, new Vector2(0, 0.5f), new Vector2(0, 0.5f));
+            AdjustPivot(itemCheckmarkObject, new Vector2(0.5f, 0.5f));
+            var itemCheckmarkImage = itemCheckmarkObject.GetOrAddComponent<Image>();
+            itemBackgroundImage.color = new Color32(20, 20, 20, 255);
+
+
+            // Create Item Label
+            GameObject itemLabelObject = CreateEmptyObject(itemObject, "Item Label", new Rect(5, -0.5f, -30, -3));
+            AdjustAnchors(itemLabelObject, new Vector2(0, 0), new Vector2(1, 1));
+            AdjustPivot(itemLabelObject, new Vector2(0.5f, 0.5f));
+            var itemLabelText = itemLabelObject.GetOrAddComponent<TextMeshProUGUI>();
+            itemLabelText.text = "Option A";
+            itemLabelText.alignment = TextAlignmentOptions.Left;
+            itemLabelText.enableAutoSizing = true;
+            itemLabelText.color = new Color32(0, 0, 0, 255);
+
+            // Create Scrollbar
+            GameObject scrollbarObject = CreateEmptyObject(templateObject, "Scrollbar", new Rect(0, 0, 20, 0));
+            AdjustAnchors(scrollbarObject, new Vector2(1, 0), new Vector2(1, 1));
+            AdjustPivot(scrollbarObject, new Vector2(1, 1));
+            var scrollbarImage = scrollbarObject.GetOrAddComponent<Image>();
+            itemBackgroundImage.color = new Color32(255, 255, 255, 255);
+            var scrollbarScrollbar = scrollbarObject.AddComponent<Scrollbar>();
+            scrollbarScrollbar.direction = Scrollbar.Direction.BottomToTop;
+
+            // Create Sliding Area
+            GameObject slidingAreaObject = CreateEmptyObject(scrollbarObject, "Sliding Area", new Rect(0, 0, -20, -20));
+            AdjustAnchors(slidingAreaObject, new Vector2(0, 0), new Vector2(1, 1));
+            AdjustPivot(slidingAreaObject, new Vector2(0.5f, 0.5f));
+
+
+            // Create Handle
+            GameObject handleObject = CreateEmptyObject(slidingAreaObject, "Handle", new Rect(0, 0, 20, 20));
+            AdjustAnchors(handleObject, new Vector2(0, 0), new Vector2(1, 0.2f));
+            AdjustPivot(handleObject, new Vector2(0.5f, 0.5f));
+            var handleImage = handleObject.GetOrAddComponent<Image>();
+            itemBackgroundImage.color = new Color32(255, 255, 255, 255);
+
+
+            // Connect it all together
+            dropdownDropdown.template = templateObject.GetComponent<RectTransform>();
+            dropdownDropdown.captionText = labelText;
+            dropdownDropdown.itemText = itemLabelText;
+
+            templateScrollRect.content = contentObject.GetComponent<RectTransform>();
+            templateScrollRect.viewport = viewportObject.GetComponent<RectTransform>();
+            templateScrollRect.verticalScrollbar = scrollbarScrollbar;
+
+            itemToggle.targetGraphic = itemBackgroundImage;
+            itemToggle.graphic = itemCheckmarkImage;
+
+            scrollbarScrollbar.handleRect = handleObject.GetComponent<RectTransform>();
+
+
+            // Fill Content
+            dropdownDropdown.AddOptions(options);
+
+            return dropdownObject;
+        }
+
+        #endregion
+
+
         #region Image
 
         static public GameObject GetOrCreateImageChild(GameObject parent, string name, Vector2 position, string spriteFilePath)
@@ -496,6 +760,19 @@ namespace AdditionalFilterOptions.Patches
             rectTransform.pivot = pivot;
         }
 
+        static private void AdjustAnchors(GameObject gameObject, Vector2 anchorMin, Vector2 anchorMax)
+        {
+            var rectTransform = gameObject.GetComponent<RectTransform>();
+            rectTransform.anchorMin = anchorMin;
+            rectTransform.anchorMax = anchorMax;
+        }
+
+        static private void AdjustPivot(GameObject gameObject, Vector2 pivot)
+        {
+            var rectTransform = gameObject.GetComponent<RectTransform>();
+            rectTransform.pivot = pivot;
+        }
+
         #endregion
     }
 
@@ -510,6 +787,24 @@ namespace AdditionalFilterOptions.Patches
             else
             {
                 return gameObject.AddComponent<T>();
+            }
+        }
+    }
+
+    public class UIButton : Button
+    {
+        public UnityEngine.Events.UnityEvent onRightClick = new UnityEngine.Events.UnityEvent();
+        public override void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Left)
+            {
+                // Invoke the left click event
+                base.OnPointerClick(eventData);
+            }
+            else if (eventData.button == PointerEventData.InputButton.Right)
+            {
+                // Invoke the right click event
+                onRightClick.Invoke();
             }
         }
     }

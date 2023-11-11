@@ -24,7 +24,7 @@ namespace AdditionalFilterOptions.Patches
             return list;
         }
 
-        static public List<SongSelectManager.Song> FilterDifficulty(List<SongSelectManager.Song> SongList, Dictionary<EnsoData.EnsoLevelType, bool> EnabledDifficulties, 
+        static public List<SongSelectManager.Song> FilterDifficulty(List<SongSelectManager.Song> SongList, Dictionary<EnsoData.EnsoLevelType, bool> EnabledDifficulties,
                                                                     int MinDifficulty, int MaxDifficulty)
         {
             var list = new List<SongSelectManager.Song>();
@@ -49,6 +49,22 @@ namespace AdditionalFilterOptions.Patches
             return list;
         }
 
+        static public List<SongFilterData> FilterDifficulty(List<SongFilterData> SongList, int MinDifficulty, int MaxDifficulty)
+        {
+            var list = new List<SongFilterData>();
+            foreach (SongFilterData s in SongList)
+            {
+                if (s.Star != 0)
+                {
+                    if (s.Star >= MinDifficulty && s.Star <= MaxDifficulty)
+                    {
+                        list.Add(s);
+                    }
+                }
+            }
+            return list;
+        }
+
         static public List<SongSelectManager.Song> FilterCrowns(List<SongSelectManager.Song> SongList, Dictionary<EnsoData.EnsoLevelType, bool> EnabledDifficulties,
                                                                 Dictionary<DataConst.CrownType, bool> EnabledCrowns)
         {
@@ -66,6 +82,21 @@ namespace AdditionalFilterOptions.Patches
                             list.Add(s);
                             break;
                         }
+                    }
+                }
+            }
+            return list;
+        }
+        static public List<SongFilterData> FilterCrowns(List<SongFilterData> SongList, Dictionary<DataConst.CrownType, bool> EnabledCrowns)
+        {
+            var list = new List<SongFilterData>();
+            foreach (SongFilterData s in SongList)
+            {
+                if (s.Star != 0)
+                {
+                    if (EnabledCrowns.ContainsKey(s.Crown) && EnabledCrowns[s.Crown])
+                    {
+                        list.Add(s);
                     }
                 }
             }
@@ -107,6 +138,7 @@ namespace AdditionalFilterOptions.Patches
                 songStrings.Add(s.TitleText);
                 songStrings.Add(s.SubText);
                 songStrings.Add(s.DetailText);
+                songStrings.Add(s.Id);
 
                 for (int i = 0; i < songStrings.Count; i++)
                 {
