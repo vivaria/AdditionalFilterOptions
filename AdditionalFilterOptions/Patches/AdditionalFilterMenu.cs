@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AdditionalFilterOptions.Settings;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +10,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Analytics;
 using UnityEngine.UI;
+using static ControllerManager;
 
 namespace AdditionalFilterOptions.Patches
 {
@@ -26,11 +28,14 @@ namespace AdditionalFilterOptions.Patches
         Slider MinDifficulty;
         Slider MaxDifficulty;
 
+        UIButton BonusButton;
+        UIButton FavoriteButton;
+
         SongSelectManager songSelectManager { get; set; }
         static List<SongSelectManager.Song> FullSongList = new List<SongSelectManager.Song>();
 
-        SortSettings sortSettings;
-        FilterSettings filterSettings;
+        //SortSettings sortSettings;
+        //FilterSettings filterSettings;
 
         //CycleButton playlistButton;
         //CycleButton sortingButton;
@@ -38,6 +43,7 @@ namespace AdditionalFilterOptions.Patches
         TextMeshProUGUI numSongsDisplay;
 
         List<PlaylistData> playlistDataObjects = new List<PlaylistData>();
+
 
         void Start()
         {
@@ -72,54 +78,76 @@ namespace AdditionalFilterOptions.Patches
             FullSongList = new List<SongSelectManager.Song>();
             Plugin.Log.LogInfo("AdditionalFilterMenu Created");
 
-            sortSettings = new SortSettings();
+            if (AdditionalFilterOptionsPatch.isFirstStartup)
+            {
+                SaveSettingsManager.LoadDefaultSettings();
+                AdditionalFilterOptionsPatch.isFirstStartup = false;
+            }
+            else
+            {
+                SaveSettingsManager.LoadLatestSettings();
+            }
+
+            //sortSettings = new SortSettings();
             //sortSettings.Sorts.Add(SortType.Difficulty);
             //sortSettings.Sorts.Add(SortType.Accuracy);
 
-            filterSettings = new FilterSettings();
-            for (int i = 0; i < (int)EnsoData.SongGenre.Num; i++)
-            {
-                if ((EnsoData.SongGenre)i == EnsoData.SongGenre.Children ||
-                    (EnsoData.SongGenre)i == EnsoData.SongGenre.Num)
-                {
-                    continue;
-                }
-                if (!filterSettings.EnabledGenres.ContainsKey((EnsoData.SongGenre)i))
-                {
-                    filterSettings.EnabledGenres.Add((EnsoData.SongGenre)i, true);
-                }
-            }
-            for (int i = 0; i < (int)DataConst.CrownType.Num; i++)
-            {
-                // Available crowns are None, Silver, Gold, and Rainbow
-                if ((DataConst.CrownType)i == DataConst.CrownType.Bronze ||
-                    (DataConst.CrownType)i == DataConst.CrownType.Off ||
-                    (DataConst.CrownType)i == DataConst.CrownType.Num)
-                {
-                    continue;
-                }
-                if (!filterSettings.EnabledCrowns.ContainsKey((DataConst.CrownType)i))
-                {
-                    filterSettings.EnabledCrowns.Add((DataConst.CrownType)i, true);
-                }
-            }
-            for (int i = 0; i < (int)EnsoData.EnsoLevelType.Num; i++)
-            {
-                var diff = (EnsoData.EnsoLevelType)i;
-                if (diff == EnsoData.EnsoLevelType.Num)
-                {
-                    continue;
-                }
-                if (!filterSettings.EnabledDifficulties.ContainsKey(diff))
-                {
-                    filterSettings.EnabledDifficulties.Add(diff, true);
-                }
-            }
-            filterSettings.MinDifficulty = 1;
-            filterSettings.MaxDifficulty = 10;
+            //filterSettings = new FilterSettings();
+            //for (int i = 0; i < (int)EnsoData.SongGenre.Num; i++)
+            //{
+            //    if ((EnsoData.SongGenre)i == EnsoData.SongGenre.Children ||
+            //        (EnsoData.SongGenre)i == EnsoData.SongGenre.Num)
+            //    {
+            //        continue;
+            //    }
+            //    if (!filterSettings.EnabledGenres.ContainsKey((EnsoData.SongGenre)i))
+            //    {
+            //        filterSettings.EnabledGenres.Add((EnsoData.SongGenre)i, true);
+            //    }
+            //}
+            //for (int i = 0; i < (int)DataConst.CrownType.Num; i++)
+            //{
+            //    // Available crowns are None, Silver, Gold, and Rainbow
+            //    if ((DataConst.CrownType)i == DataConst.CrownType.Bronze ||
+            //        (DataConst.CrownType)i == DataConst.CrownType.Off ||
+            //        (DataConst.CrownType)i == DataConst.CrownType.Num)
+            //    {
+            //        continue;
+            //    }
+            //    if (!filterSettings.EnabledCrowns.ContainsKey((DataConst.CrownType)i))
+            //    {
+            //        filterSettings.EnabledCrowns.Add((DataConst.CrownType)i, true);
+            //    }
+            //}
+            //for (int i = 0; i < (int)EnsoData.EnsoLevelType.Num; i++)
+            //{
+            //    var diff = (EnsoData.EnsoLevelType)i;
+            //    if (diff == EnsoData.EnsoLevelType.Num)
+            //    {
+            //        continue;
+            //    }
+            //    if (!filterSettings.EnabledDifficulties.ContainsKey(diff))
+            //    {
+            //        filterSettings.EnabledDifficulties.Add(diff, true);
+            //    }
+            //}
+            //filterSettings.MinDifficulty = 1;
+            //filterSettings.MaxDifficulty = 10;
 
             SetFilterMenuActive(false);
             InitializeUI();
+            TaikoSingletonMonoBehaviour<ControllerManager>.Instance.usedType.type = ControllerManager.ControllerType.Keyboard;
+        }
+
+        void Update()
+        {
+            TaikoSingletonMonoBehaviour<ControllerManager>.Instance.usedType.type = ControllerManager.ControllerType.Keyboard;
+        }
+
+        static public int previousIndex = -1;
+        public void UpdatePreviousSongIndex()
+        {
+            previousIndex = songSelectManager.SelectedSongIndex;
         }
 
         //void Update()
@@ -151,6 +179,7 @@ namespace AdditionalFilterOptions.Patches
         public void SetFilterMenuActive(bool isActive)
         {
             realParent.SetActive(isActive);
+            UpdateUiElements();
         }
 
         private void InitializeUI()
@@ -185,6 +214,7 @@ namespace AdditionalFilterOptions.Patches
 
             parent = UnityObjectUtility.CreateImage("FilterBackground", new Color32(0, 0, 0, (int)(255 * 0.698f)), new Rect(0, 0, 1920, 1080), realParent.transform);
 
+            // TODO: Add UI elements to enable/disable favorites and bonus songs
 
             InitializeGenreFilter();
 
@@ -194,13 +224,18 @@ namespace AdditionalFilterOptions.Patches
 
             InitializeDifficultySliders();
 
+            InitializeSetDefaultButton();
+
+            InitializeBonusFilterButton();
+
+            InitializeFavoriteFilterButton();
 
             for (int i = 0; i < (int)EnsoData.SongGenre.Num; i++)
             {
                 var genre = (EnsoData.SongGenre)i;
-                if (filterSettings.EnabledGenres.ContainsKey(genre) && GenreFilterButtons.ContainsKey(genre))
+                if (GenreFilterButtons.ContainsKey(genre))
                 {
-                    AssetUtility.ChangeButtonTransparency(GenreFilterButtons[genre], filterSettings.EnabledGenres[genre]);
+                    AssetUtility.ChangeButtonTransparency(GenreFilterButtons[genre], SaveSettingsManager.filterSettings.GetGenre(genre));
                 }
             }
 
@@ -279,39 +314,57 @@ namespace AdditionalFilterOptions.Patches
             var resetObject = AssetUtility.CreateButton(parent, "Reset", new Rect(1800, 100, 100, 50), "Reset", new Color32(255, 255, 255, 255));
             var resetButton = resetObject.GetOrAddComponent<UIButton>();
             resetButton.onClick.AddListener(() => ResetFilters());
+
+            UpdateUiElements();
         }
 
         private void ResetFilters()
         {
-            filterSettings.TextFilter = string.Empty;
+            SaveSettingsManager.filterSettings.ResetValues();
+            SaveSettingsManager.sortSettings.ResetValues();
+
+            UpdateUiElements();
+
+            FilterSongList();
+        }
+
+        /// <summary>
+        /// This updates the filter ui elements to what the current settings are.
+        /// </summary>
+        private void UpdateUiElements()
+        {
+            inputField.text = "";
+
             for (int i = 0; i < (int)EnsoData.SongGenre.Num; i++)
             {
                 var iGenre = (EnsoData.SongGenre)i;
-                if (filterSettings.EnabledGenres.ContainsKey(iGenre))
+                if (GenreFilterButtons.ContainsKey(iGenre))
                 {
-                    filterSettings.EnabledGenres[iGenre] = true;
-                    AssetUtility.ChangeButtonTransparency(GenreFilterButtons[iGenre], filterSettings.EnabledGenres[iGenre]);
+                    AssetUtility.ChangeButtonTransparency(GenreFilterButtons[iGenre], SaveSettingsManager.filterSettings.GetGenre(iGenre));
                 }
             }
             for (int i = 0; i < (int)DataConst.CrownType.Num; i++)
             {
                 var iCrown = (DataConst.CrownType)i;
-                if (filterSettings.EnabledCrowns.ContainsKey(iCrown))
+                if (CrownFilterButtons.ContainsKey(iCrown))
                 {
-                    filterSettings.EnabledCrowns[iCrown] = true;
-                    AssetUtility.ChangeButtonTransparency(CrownFilterButtons[iCrown], filterSettings.EnabledCrowns[iCrown]);
+                    AssetUtility.ChangeButtonTransparency(CrownFilterButtons[iCrown], SaveSettingsManager.filterSettings.GetCrown(iCrown));
                 }
             }
             for (int i = 0; i < (int)EnsoData.EnsoLevelType.Num; i++)
             {
                 var iDiff = (EnsoData.EnsoLevelType)i;
-                if (filterSettings.EnabledDifficulties.ContainsKey(iDiff))
+                if (DifficultyFilterButtons.ContainsKey(iDiff))
                 {
-                    filterSettings.EnabledDifficulties[iDiff] = true;
-                    AssetUtility.ChangeButtonTransparency(DifficultyFilterButtons[iDiff], filterSettings.EnabledDifficulties[iDiff]);
+                    AssetUtility.ChangeButtonTransparency(DifficultyFilterButtons[iDiff], SaveSettingsManager.filterSettings.GetDifficulty(iDiff));
                 }
             }
 
+            MinDifficulty.value = SaveSettingsManager.filterSettings.MinDifficulty;
+            MaxDifficulty.value = SaveSettingsManager.filterSettings.MaxDifficulty;
+
+            AssetUtility.ChangeButtonTransparency(BonusButton.gameObject, SaveSettingsManager.filterSettings.Bonus);
+            AssetUtility.ChangeButtonTransparency(FavoriteButton.gameObject, SaveSettingsManager.filterSettings.Favorite);
         }
 
         private void InitializeGenreFilter()
@@ -522,8 +575,48 @@ namespace AdditionalFilterOptions.Patches
             MinDifficulty.value = 1;
             MaxDifficulty.value = 10;
 
-            MinDifficulty.onValueChanged.AddListener((float f) => DifficultySliderChanged());
-            MaxDifficulty.onValueChanged.AddListener((float f) => DifficultySliderChanged());
+            MinDifficulty.onValueChanged.AddListener((float f) => DifficultySliderChanged(true));
+            MaxDifficulty.onValueChanged.AddListener((float f) => DifficultySliderChanged(false));
+        }
+
+        public void InitializeSetDefaultButton()
+        {
+            var resetObject = AssetUtility.CreateButton(parent, "SetDefault", new Rect(1800, 200, 100, 50), "Set Default", new Color32(255, 255, 255, 255));
+            var resetButton = resetObject.GetOrAddComponent<UIButton>();
+            resetButton.onClick.AddListener(() => SaveSettingsManager.SaveDefaultSettings());
+        }
+
+        public void InitializeBonusFilterButton()
+        {
+            GameObject bonusObject = GameObject.Find("IconBonus");
+            var bonusImage = bonusObject.GetComponent<Image>();
+
+            var bonusFilterObj = AssetUtility.CreateEmptyObject(parent, "BonusFilter", new Vector2(1700, 800));
+            AssetUtility.CreateImageChild(bonusFilterObj, "BonusFilterImage", Vector2.zero, bonusImage.sprite);
+
+            bonusFilterObj.transform.localScale = new Vector3(2, 2, 2);
+
+            var button = AssetUtility.AddButtonComponent(bonusFilterObj);
+            button.onClick.AddListener(() => ClickBonusFilterButton(button));
+
+            BonusButton = button;
+        }
+
+        public void InitializeFavoriteFilterButton()
+        {
+            // I don't think this works properly tbh
+            GameObject favoriteObject = GameObject.Find("IconFavorite1P");
+            var favoriteImage = favoriteObject.GetComponent<UnityEngine.UI.Image>();
+
+            var favoriteFilterObj = AssetUtility.CreateEmptyObject(parent, "FavoriteFilter", new Vector2(1700, 750));
+            AssetUtility.CreateImageChild(favoriteFilterObj, "FavoriteFilterImage", Vector2.zero, favoriteImage.sprite);
+
+            favoriteFilterObj.transform.localScale = new Vector3(2, 2, 2);
+
+            var button = AssetUtility.AddButtonComponent(favoriteFilterObj);
+            button.onClick.AddListener(() => ClickFavoriteFilterButton(button));
+
+            FavoriteButton = button;
         }
 
         #region UI Events
@@ -535,8 +628,8 @@ namespace AdditionalFilterOptions.Patches
             rightClickedGenreOnce = false;
             previousGenreRightClick = EnsoData.SongGenre.Num;
             Plugin.LogInfo("Button Click: " + genre);
-            filterSettings.EnabledGenres[genre] = !filterSettings.EnabledGenres[genre];
-            AssetUtility.ChangeButtonTransparency(GenreFilterButtons[genre], filterSettings.EnabledGenres[genre]);
+            SaveSettingsManager.filterSettings.SetGenre(genre, !SaveSettingsManager.filterSettings.GetGenre(genre));
+            AssetUtility.ChangeButtonTransparency(GenreFilterButtons[genre], SaveSettingsManager.filterSettings.GetGenre(genre));
             FilterSongList();
             ActivateInputField();
         }
@@ -553,19 +646,18 @@ namespace AdditionalFilterOptions.Patches
             for (int i = 0; i < (int)EnsoData.SongGenre.Num; i++)
             {
                 var iGenre = (EnsoData.SongGenre)i;
-                if (filterSettings.EnabledGenres.ContainsKey(iGenre))
+                if (iGenre != EnsoData.SongGenre.Children)
                 {
                     if (iGenre == genre)
                     {
-                        filterSettings.EnabledGenres[iGenre] = isEnable;
+                        SaveSettingsManager.filterSettings.SetGenre(iGenre, isEnable);
                     }
                     else
                     {
-                        filterSettings.EnabledGenres[iGenre] = !isEnable;
+                        SaveSettingsManager.filterSettings.SetGenre(iGenre, !isEnable);
                     }
-                    AssetUtility.ChangeButtonTransparency(GenreFilterButtons[iGenre], filterSettings.EnabledGenres[iGenre]);
+                    AssetUtility.ChangeButtonTransparency(GenreFilterButtons[iGenre], SaveSettingsManager.filterSettings.GetGenre(iGenre));
                 }
-
             }
             FilterSongList();
             ActivateInputField();
@@ -578,8 +670,8 @@ namespace AdditionalFilterOptions.Patches
             rightClickedCrownOnce = false;
             previousCrownClick = DataConst.CrownType.Num;
             Plugin.LogInfo("Button Click: " + crown);
-            filterSettings.EnabledCrowns[crown] = !filterSettings.EnabledCrowns[crown];
-            AssetUtility.ChangeButtonTransparency(CrownFilterButtons[crown], filterSettings.EnabledCrowns[crown]);
+            SaveSettingsManager.filterSettings.SetCrown(crown, !SaveSettingsManager.filterSettings.GetCrown(crown));
+            AssetUtility.ChangeButtonTransparency(CrownFilterButtons[crown], SaveSettingsManager.filterSettings.GetCrown(crown));
             FilterSongList();
             ActivateInputField();
         }
@@ -595,17 +687,18 @@ namespace AdditionalFilterOptions.Patches
             for (int i = 0; i < (int)DataConst.CrownType.Num; i++)
             {
                 var iCrown = (DataConst.CrownType)i;
-                if (filterSettings.EnabledCrowns.ContainsKey(iCrown))
+                if (iCrown != DataConst.CrownType.Off &&
+                    iCrown != DataConst.CrownType.Bronze)
                 {
                     if (iCrown == crown)
                     {
-                        filterSettings.EnabledCrowns[iCrown] = isEnable;
+                        SaveSettingsManager.filterSettings.SetCrown(iCrown, isEnable);
                     }
                     else
                     {
-                        filterSettings.EnabledCrowns[iCrown] = !isEnable;
+                        SaveSettingsManager.filterSettings.SetCrown(iCrown, !isEnable);
                     }
-                    AssetUtility.ChangeButtonTransparency(CrownFilterButtons[iCrown], filterSettings.EnabledCrowns[iCrown]);
+                    AssetUtility.ChangeButtonTransparency(CrownFilterButtons[iCrown], SaveSettingsManager.filterSettings.GetCrown(iCrown));
                 }
 
             }
@@ -620,15 +713,8 @@ namespace AdditionalFilterOptions.Patches
             rightClickedDifficultyOnce = false;
             previousDifficultyClick = EnsoData.EnsoLevelType.Num;
             Plugin.LogInfo("Button Click: " + diff);
-            if (filterSettings.EnabledDifficulties.ContainsKey(diff))
-            {
-                filterSettings.EnabledDifficulties[diff] = !filterSettings.EnabledDifficulties[diff];
-            }
-            else
-            {
-                filterSettings.EnabledDifficulties.Add(diff, false);
-            }
-            AssetUtility.ChangeButtonTransparency(DifficultyFilterButtons[diff], filterSettings.EnabledDifficulties[diff]);
+            SaveSettingsManager.filterSettings.SetDifficulty(diff, !SaveSettingsManager.filterSettings.GetDifficulty(diff));
+            AssetUtility.ChangeButtonTransparency(DifficultyFilterButtons[diff], SaveSettingsManager.filterSettings.GetDifficulty(diff));
             FilterSongList();
             ActivateInputField();
         }
@@ -644,19 +730,15 @@ namespace AdditionalFilterOptions.Patches
             for (int i = 0; i < (int)EnsoData.EnsoLevelType.Num; i++)
             {
                 var iDiff = (EnsoData.EnsoLevelType)i;
-                if (filterSettings.EnabledDifficulties.ContainsKey(iDiff))
+                if (iDiff == diff)
                 {
-                    if (iDiff == diff)
-                    {
-                        filterSettings.EnabledDifficulties[iDiff] = isEnable;
-                    }
-                    else
-                    {
-                        filterSettings.EnabledDifficulties[iDiff] = !isEnable;
-                    }
-                    AssetUtility.ChangeButtonTransparency(DifficultyFilterButtons[iDiff], filterSettings.EnabledDifficulties[iDiff]);
+                    SaveSettingsManager.filterSettings.SetDifficulty(iDiff, isEnable);
                 }
-
+                else
+                {
+                    SaveSettingsManager.filterSettings.SetDifficulty(iDiff, !isEnable);
+                }
+                AssetUtility.ChangeButtonTransparency(DifficultyFilterButtons[iDiff], SaveSettingsManager.filterSettings.GetDifficulty(iDiff));
             }
             FilterSongList();
             ActivateInputField();
@@ -666,14 +748,23 @@ namespace AdditionalFilterOptions.Patches
         public void SearchInputChanged(string newValue)
         {
             Plugin.LogInfo("SearchInput Changed: " + newValue);
-            filterSettings.TextFilter = newValue;
+            SaveSettingsManager.filterSettings.TextFilter = newValue;
             FilterSongList();
         }
 
-        public void DifficultySliderChanged()
+        public void DifficultySliderChanged(bool minChanged)
         {
-            filterSettings.MinDifficulty = (int)MinDifficulty.value;
-            filterSettings.MaxDifficulty = (int)MaxDifficulty.value;
+            // I really hope this doesn't cause an infinite loop
+            if (minChanged && MinDifficulty.value > MaxDifficulty.value)
+            {
+                MaxDifficulty.value = MinDifficulty.value;
+            }
+            else if (!minChanged && MaxDifficulty.value < MinDifficulty.value)
+            {
+                MinDifficulty.value = MaxDifficulty.value;
+            }
+            SaveSettingsManager.filterSettings.MinDifficulty = (int)MinDifficulty.value;
+            SaveSettingsManager.filterSettings.MaxDifficulty = (int)MaxDifficulty.value;
             FilterSongList();
         }
 
@@ -685,14 +776,28 @@ namespace AdditionalFilterOptions.Patches
 
         public void PlaylistDropdownChanged(int newIndex)
         {
-            filterSettings.PlaylistData = playlistDataObjects[newIndex - 1];
+            SaveSettingsManager.filterSettings.PlaylistData = playlistDataObjects[newIndex - 1];
             FilterSongList();
         }
 
         public void SortDropdownChanged(int newIndex)
         {
-            sortSettings.Sorts.Clear();
-            sortSettings.Sorts.Add((SortType)newIndex);
+            SaveSettingsManager.sortSettings.Sorts.Clear();
+            SaveSettingsManager.sortSettings.Sorts.Add((SortType)newIndex);
+            FilterSongList();
+        }
+
+        public void ClickBonusFilterButton(UIButton button)
+        {
+            SaveSettingsManager.filterSettings.Bonus = !SaveSettingsManager.filterSettings.Bonus;
+            AssetUtility.ChangeButtonTransparency(button.gameObject, SaveSettingsManager.filterSettings.Bonus);
+            FilterSongList();
+        }
+
+        public void ClickFavoriteFilterButton(UIButton button)
+        {
+            SaveSettingsManager.filterSettings.Favorite = !SaveSettingsManager.filterSettings.Favorite;
+            AssetUtility.ChangeButtonTransparency(button.gameObject, SaveSettingsManager.filterSettings.Favorite);
             FilterSongList();
         }
 
@@ -715,16 +820,16 @@ namespace AdditionalFilterOptions.Patches
 
         private void FilterSongList()
         {
-            List<SongSelectManager.Song> filteredSongList = LoadPlaylist(filterSettings.PlaylistData);
+            List<SongSelectManager.Song> filteredSongList = LoadPlaylist(SaveSettingsManager.filterSettings.PlaylistData);
 
-            filteredSongList = Filter.FilterText(filteredSongList, filterSettings.TextFilter);
-            filteredSongList = Filter.FilterGenres(filteredSongList, filterSettings.EnabledGenres);
+            filteredSongList = Filter.FilterText(filteredSongList, SaveSettingsManager.filterSettings.TextFilter);
+            filteredSongList = Filter.FilterGenres(filteredSongList, SaveSettingsManager.filterSettings.EnabledGenres);
 
             var songFilterDataList = new List<SongFilterData>();
             for (int j = 0; j < (int)EnsoData.EnsoLevelType.Num; j++)
             {
                 var jDiff = (EnsoData.EnsoLevelType)j;
-                if (!filterSettings.EnabledDifficulties[jDiff])
+                if (!SaveSettingsManager.filterSettings.GetDifficulty(jDiff))
                 {
                     continue;
                 }
@@ -735,11 +840,14 @@ namespace AdditionalFilterOptions.Patches
             }
 
 
-            songFilterDataList = Filter.FilterCrowns(songFilterDataList, filterSettings.EnabledCrowns);
-            songFilterDataList = Filter.FilterDifficulty(songFilterDataList, filterSettings.MinDifficulty, filterSettings.MaxDifficulty);
+            songFilterDataList = Filter.FilterCrowns(songFilterDataList, SaveSettingsManager.filterSettings.EnabledCrowns);
+            songFilterDataList = Filter.FilterDifficulty(songFilterDataList, SaveSettingsManager.filterSettings.MinDifficulty, SaveSettingsManager.filterSettings.MaxDifficulty);
+
+            songFilterDataList = Filter.FilterBonus(songFilterDataList, SaveSettingsManager.filterSettings.Bonus);
+            songFilterDataList = Filter.FilterFavorite(songFilterDataList, SaveSettingsManager.filterSettings.Favorite);
 
             //filteredSongList = Sort.SortSongList(filteredSongList, sortSettings.Sorts, filterSettings.EnabledDifficulties);
-            songFilterDataList = Sort.SortSongList(songFilterDataList, sortSettings, false);
+            songFilterDataList = Sort.SortSongList(songFilterDataList, SaveSettingsManager.sortSettings, false);
 
 
             UpdateSongList(songFilterDataList, filteredSongList);
@@ -747,7 +855,7 @@ namespace AdditionalFilterOptions.Patches
 
         List<SongSelectManager.Song> LoadPlaylist(PlaylistData songData)
         {
-            if (songData == null)
+            if (songData == null || songData.JsonFilePath == string.Empty)
             {
                 return new List<SongSelectManager.Song>(FullSongList);
             }
@@ -771,7 +879,7 @@ namespace AdditionalFilterOptions.Patches
 
                         // ListGenre is not used anywhere it seems
                         //FullSongList[j].ListGenre = songData.Songs[i].GenreNo;
-                        song.DLC = songData.Songs[i].isDlc;
+                        song.DLC = songData.Songs[i].IsDlc;
                         result.Add(song);
                         break;
                     }
@@ -847,7 +955,11 @@ namespace AdditionalFilterOptions.Patches
             //{
             //    songSelectManager.SelectedSongIndex = 0;
             //}
+
+            // TODO: Make sure when a song is removed from the previous play, that the song list goes to that position after the song is removed
             var prevSongId = songSelectManager.SongList[songSelectManager.SelectedSongIndex].Id;
+            Plugin.LogInfo("prevSongId: " + prevSongId);
+            Plugin.LogInfo("songSelectManager.SelectedSongIndex: " + songSelectManager.SelectedSongIndex);
 
             if (newList.Count == 0)
             {
@@ -862,7 +974,7 @@ namespace AdditionalFilterOptions.Patches
                 }
             }
 
-            int newSongIndex = 0;
+            int newSongIndex = Mathf.Max(previousIndex, 0);
             for (int i = 0; i < songSelectManager.SongList.Count; i++)
             {
                 if (songSelectManager.SongList[i].Id == prevSongId)
@@ -900,7 +1012,7 @@ namespace AdditionalFilterOptions.Patches
             songSelectManager.kanbans[0].DiffCourseChangeAnim.Play("ChangeMania", 0, 1f);
             songSelectManager.UpdateScoreDisplay();
 
-            UpdateQuickJumpValues(newList, sortSettings.PrimarySort);
+            UpdateQuickJumpValues(newList, SaveSettingsManager.sortSettings.PrimarySort);
 
             numSongsDisplay.text = songSelectManager.SongList.Count + "/" + FullSongList.Count;
         }

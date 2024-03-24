@@ -103,6 +103,40 @@ namespace AdditionalFilterOptions.Patches
             return list;
         }
 
+        public static List<SongFilterData> FilterBonus(List<SongFilterData> SongList, bool IsBonus)
+        {
+            if (!IsBonus)
+            {
+                return SongList;
+            }
+            var list = new List<SongFilterData>();
+            foreach (var song in SongList)
+            {
+                if (song.IsBonus)
+                {
+                    list.Add(song);
+                }
+            }
+            return list;
+        }
+
+        public static List<SongFilterData> FilterFavorite(List<SongFilterData> SongList, bool IsFavorite)
+        {
+            if (!IsFavorite)
+            {
+                return SongList;
+            }
+            var list = new List<SongFilterData>();
+            foreach (var song in SongList)
+            {
+                if (song.IsFavorite)
+                {
+                    list.Add(song);
+                }
+            }
+            return list;
+        }
+
         static WordDataInterface JpWordData;
         static WordDataInterface EngWordData;
 

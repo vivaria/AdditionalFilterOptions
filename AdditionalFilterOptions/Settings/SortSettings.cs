@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AdditionalFilterOptions.Patches;
 
-namespace AdditionalFilterOptions.Patches
+namespace AdditionalFilterOptions.Settings
 {
     internal class SortSettings
     {
-        public SortType PrimarySort { get
+        public SortType PrimarySort
+        {
+            get
             {
                 if (Sorts.Count > 0)
                 {
@@ -24,7 +27,11 @@ namespace AdditionalFilterOptions.Patches
         public SortSettings()
         {
             Sorts = new List<SortType>();
+        }
 
+        public void ResetValues()
+        {
+            Sorts.Clear();
         }
     }
 }

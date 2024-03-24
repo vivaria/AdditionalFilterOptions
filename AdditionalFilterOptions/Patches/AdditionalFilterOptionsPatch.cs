@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using AdditionalFilterOptions.Settings;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,7 @@ namespace AdditionalFilterOptions.Patches
 
         static AdditionalFilterMenu filterMenu;
 
+        public static bool isFirstStartup = true;
 
         private static bool pressedF3 = false;
 
@@ -99,6 +101,10 @@ namespace AdditionalFilterOptions.Patches
         private static void ToggleFilterMenuActive()
         {
             var isActive = filterMenu.gameObject.activeInHierarchy;
+            if (isActive)
+            {
+                SaveSettingsManager.SaveLatestSettings();
+            }
             SetFilterMenuActive(!isActive);
         }
 
@@ -114,6 +120,16 @@ namespace AdditionalFilterOptions.Patches
         private static bool SongSelectManager_UpdateSortCategoryInfo_Prefix(SongSelectManager __instance)
         {
             return false;
+        }
+
+        [HarmonyPatch(typeof(CourseSelect))]
+        [HarmonyPatch(nameof(CourseSelect.EnsoConfigSubmit))]
+        [HarmonyPatch(MethodType.Normal)]
+        [HarmonyPrefix]
+        private static bool CourseSelect_EnsoConfigSubmit_Prefix(CourseSelect __instance)
+        {
+            filterMenu.UpdatePreviousSongIndex();
+            return true;
         }
 
         [HarmonyPatch(typeof(SongSelectManager))]

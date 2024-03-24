@@ -15,6 +15,8 @@ namespace AdditionalFilterOptions.Patches
         public int Order { get; set; }
         public EnsoData.EnsoLevelType Difficulty { get; set; }
         public int Star { get; set; }
+        public bool IsBonus { get; set; }
+        public bool IsFavorite { get; set; }
         public DataConst.CrownType Crown { get; set; }
         SongSelectManager.Score HighScore { get; set; }
         float acc = -1;
@@ -41,6 +43,8 @@ namespace AdditionalFilterOptions.Patches
             Star = song.Stars[(int)levelType];
             Crown = song.HighScores[(int)levelType].crown;
             HighScore = song.HighScores[(int)levelType];
+            IsBonus = song.DailyBonus;
+            IsFavorite = song.Favorite;
         }
 
         float CalculateAccuracy(SongSelectManager.Score score)

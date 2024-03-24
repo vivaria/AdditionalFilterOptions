@@ -15,19 +15,22 @@ using BepInEx.Unity.IL2CPP;
 
 namespace AdditionalFilterOptions
 {
-    [BepInPlugin(PluginInfo.PLUGIN_GUID, "AdditionalFilterOptions", PluginInfo.PLUGIN_VERSION)]
+    [BepInPlugin(PluginInfo.PLUGIN_GUID, ModName, PluginInfo.PLUGIN_VERSION)]
 #if TAIKO_MONO
     public class Plugin : BaseUnityPlugin
 #elif TAIKO_IL2CPP
     public class Plugin : BasePlugin
 #endif
     {
+        const string ModName = "AdditionalFilterOptions";
+
         public static Plugin Instance;
         private Harmony _harmony;
         public new static ManualLogSource Log;
 
         public ConfigEntry<bool> ConfigEnabled;
         public ConfigEntry<string> ConfigPlaylistLocation;
+        public ConfigEntry<string> ConfigSettingsLocation;
 
         public ConfigEntry<bool> ConfigLoggingEnabled;
         public ConfigEntry<int> ConfigLoggingDetailLevelEnabled;
@@ -52,9 +55,7 @@ namespace AdditionalFilterOptions
 
         private void SetupConfig()
         {
-            // I never really used this
-            // I'd rather just use a folder in BepInEx's folder for storing information
-            var userFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string dataFolderPath = Path.Combine("BepInEx", "data", ModName);
 
             ConfigEnabled = Config.Bind("General",
                 "Enabled",
@@ -63,8 +64,13 @@ namespace AdditionalFilterOptions
 
             ConfigPlaylistLocation = Config.Bind("General",
                 "PlaylistLocation",
-                Path.Combine("BepInEx", "data", "CustomPlaylists"),
+                Path.Combine(dataFolderPath, "CustomPlaylists"),
                 "Location for custom playlists.");
+
+            ConfigSettingsLocation = Config.Bind("General",
+                "SettingsLocation",
+                Path.Combine(dataFolderPath, "Settings"),
+                "Location for sorting and filtering settings.");
 
             ConfigLoggingEnabled = Config.Bind("Debug",
                 "LoggingEnabled",

@@ -1,9 +1,9 @@
-﻿using System;
+﻿using LightWeightJsonParser;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace AdditionalFilterOptions.Patches
@@ -17,15 +17,30 @@ namespace AdditionalFilterOptions.Patches
 
         public PlaylistData(string jsonFilePath)
         {
-            JsonNode node = JsonNode.Parse(File.ReadAllText(jsonFilePath));
-            JsonFilePath = jsonFilePath.Remove(0, Plugin.Instance.ConfigPlaylistLocation.Value.Length + 1);
-            InitializeData(node);
+            if (jsonFilePath == "")
+            {
+                Name = "None";
+                JsonFilePath = "";
+                return;
+            }
+            FileInfo file = new FileInfo(jsonFilePath);
+            if (file.Exists)
+            {
+                LWJson node = LWJson.Parse(File.ReadAllText(jsonFilePath));
+                JsonFilePath = jsonFilePath.Remove(0, Plugin.Instance.ConfigPlaylistLocation.Value.Length + 1);
+                InitializeData(node);
+            }
+            else
+            {
+                Name = "None";
+                JsonFilePath = "";
+            }
         }
 
-        private void InitializeData(JsonNode node)
+        private void InitializeData(LWJson node)
         {
-            Name = node["playlistName"].GetValue<string>();
-            Order = node["order"].GetValue<int>();
+            Name = node["playlistName"].AsString();
+            Order = node["order"].AsInteger();
             Songs = new List<PlaylistSongData>();
             var songsArray = node["songs"].AsArray();
             for (int i = 0; i < songsArray.Count; i++)

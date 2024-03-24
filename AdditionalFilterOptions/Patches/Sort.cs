@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AdditionalFilterOptions.Settings;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -332,13 +333,17 @@ namespace AdditionalFilterOptions.Patches
         static IOrderedEnumerable<SongFilterData> SortByDifficulty(List<SongFilterData> SongList)
         {
             // This is ugly, but it might actually be accurate
-            return SongList.OrderBy((x) => x.Star);
+            return SongList.OrderBy((x) => x.Star)
+                           .ThenBy((x) => x.GenreNo)
+                           .ThenBy((x) => x.Order);
         }
 
         static IOrderedEnumerable<SongFilterData> SortByDifficulty(IOrderedEnumerable<SongFilterData> SongList)
         {
             // This is ugly, but it might actually be accurate
-            return SongList.ThenBy((x) => x.Star);
+            return SongList.ThenBy((x) => x.Star)
+                           .ThenBy((x) => x.GenreNo)
+                           .ThenBy((x) => x.Order);
         }
 
         static IOrderedEnumerable<SongFilterData> SortByAlphabeticalTitle(List<SongFilterData> SongList)
